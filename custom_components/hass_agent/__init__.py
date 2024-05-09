@@ -42,7 +42,7 @@ PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 
 _LOGGER = logging.getLogger(__name__)
 
-def update_device_info(hass: HomeAssistant, entry: ConfigEntry, new_device_info):
+async def update_device_info(hass: HomeAssistant, entry: ConfigEntry, new_device_info):
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
@@ -166,7 +166,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         response_json = response.json()
 
-        update_device_info(hass, entry, response_json)
+        await update_device_info(hass, entry, response_json)
 
         apis = {
             "notifications": True,
@@ -181,12 +181,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         sub_state = hass.data[DOMAIN][entry.entry_id]["internal_mqtt"]
 
-        def updated(message: ReceiveMessage):
+        async def updated(message: ReceiveMessage):
             payload = json.loads(message.payload)
             cached = hass.data[DOMAIN][entry.entry_id]["apis"]
             apis = payload["apis"]
 
-            update_device_info(hass, entry, payload)
+            await update_device_info(hass, entry, payload)
 
             if cached != apis:
                 hass.async_create_task(handle_apis_changed(hass, entry, apis))
