@@ -16,9 +16,9 @@ You can use actionable notifications to interact with HA:
 
 ----
 
-[GETTING STARTED GUIDE](https://hass-agent.github.io/latest/getting-started/)
+[GETTING STARTED GUIDE](https://www.hass-agent.io/latest/getting-started/)
 
-For more help and examples, check [the documentation](https://hass-agent.github.io/latest/), visit the <a href="https://community.home-assistant.io/t/hass-agent-a-new-windows-based-client-to-receive-notifications-perform-quick-actions-and-much-more/369094" target="_blank">dedicated HA forum thread</a> or <a href="https://discord.gg/JfZj98xqJr" target="_blank">join on Discord</a>.
+For more help and examples, check [the documentation](https://www.hass-agent.io/latest/), visit the <a href="https://community.home-assistant.io/t/hass-agent-a-new-windows-based-client-to-receive-notifications-perform-quick-actions-and-much-more/369094" target="_blank">dedicated HA forum thread</a> or <a href="https://discord.gg/JfZj98xqJr" target="_blank">join on Discord</a>.
 
 ----
 
