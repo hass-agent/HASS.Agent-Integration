@@ -1,28 +1,46 @@
 """The HASS.Agent integration."""
 from __future__ import annotations
+
+import asyncio
+from collections.abc import Coroutine
+from contextlib import suppress
 import json
 import logging
+from pathlib import Path
 import requests
+from typing import Any, cast
 from .views import MediaPlayerThumbnailView
-from homeassistant.helpers import device_registry as dr
+
+from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.components import mqtt
 from homeassistant.components.mqtt.models import ReceiveMessage
 from homeassistant.components.mqtt.subscription import (
     async_prepare_subscribe_topics,
     async_subscribe_topics,
     async_unsubscribe_topics,
 )
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_ID, CONF_NAME, CONF_URL, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.const import (
+    CONF_ID,
+    CONF_NAME, 
+    CONF_URL, 
+    Platform, 
+    SERVICE_RELOAD,
+)
+from homeassistant.core import HomeAssistant, ServiceCall, async_get_hass
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import discovery
+from homeassistant.helpers.service import async_register_admin_service
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import slugify    
 
 from .const import DOMAIN
 
+DOMAIN = "hass_agent"
+FOLDER = "hass_agent"
+
 PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 
-_logger = logging.getLogger(__name__)
-
+_LOGGER = logging.getLogger(__name__)
 
 def update_device_info(hass: HomeAssistant, entry: ConfigEntry, new_device_info):
     device_registry = dr.async_get(hass)
@@ -35,6 +53,34 @@ def update_device_info(hass: HomeAssistant, entry: ConfigEntry, new_device_info)
         sw_version=new_device_info["device"]["sw_version"],
     )
 
+async def async_wait_for_mqtt_client(hass: HomeAssistant) -> bool:
+    """Wait for the MQTT client to become available.
+    Waits when mqtt set up is in progress,
+    It is not needed that the client is connected.
+    Returns True if the mqtt client is available.
+    Returns False when the client is not available.
+    """
+    if not mqtt_config_entry_enabled(hass):
+        return False
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    if entry.state == ConfigEntryState.LOADED:
+        return True
+
+    state_reached_future: asyncio.Future[bool]
+    if DATA_MQTT_AVAILABLE not in hass.data:
+        hass.data[DATA_MQTT_AVAILABLE] = state_reached_future = asyncio.Future()
+    else:
+        state_reached_future = hass.data[DATA_MQTT_AVAILABLE]
+        if state_reached_future.done():
+            return state_reached_future.result()
+
+    try:
+        async with async_timeout.timeout(AVAILABILITY_TIMEOUT):
+            # Await the client setup or an error state was received
+            return await state_reached_future
+    except asyncio.TimeoutError:
+        return False
 
 async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
     if apis is not None:
@@ -94,7 +140,6 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
 
                 hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"] = False
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HASS.Agent from a config entry."""
 
@@ -115,7 +160,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if url is not None:
 
         def get_device_info():
-            return requests.get(f"{url}/info", timeout=10)
+            return requests.get(f"{url}/info", timeout=60)
 
         response = await hass.async_add_executor_job(get_device_info)
 
@@ -165,7 +210,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     return True
 
-
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
@@ -202,7 +246,32 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     return unload_ok
 
-
-async def async_setup(hass: HomeAssistant, config) -> bool:
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up hass_agent integration."""
     hass.http.register_view(MediaPlayerThumbnailView(hass))
+
+    # Make sure MQTT integration is enabled and the client is available
+    if not await mqtt.async_wait_for_mqtt_client(hass):
+        _LOGGER.error("MQTT integration is not available")
+        return False
+    
+    async def _handle_reload(service):
+        """Handle reload service call."""
+        _LOGGER.info("Service %s.reload called: reloading integration", DOMAIN)
+
+        current_entries = hass.config_entries.async_entries(DOMAIN)
+
+        reload_tasks = [
+            hass.config_entries.async_reload(entry.entry_id)
+            for entry in current_entries
+        ]
+
+        await asyncio.gather(*reload_tasks)
+
+    hass.helpers.service.async_register_admin_service(
+        DOMAIN,
+        SERVICE_RELOAD,
+        _handle_reload,
+    )
+
     return True
