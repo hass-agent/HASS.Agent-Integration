@@ -40,7 +40,7 @@ FOLDER = "hass_agent"
 
 PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 
-_LOGGER = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 async def update_device_info(hass: HomeAssistant, entry: ConfigEntry, new_device_info):
     device_registry = dr.async_get(hass)
@@ -253,12 +253,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     # Make sure MQTT integration is enabled and the client is available
     if not await mqtt.async_wait_for_mqtt_client(hass):
-        _LOGGER.error("MQTT integration is not available")
+        _logger.error("MQTT integration is not available")
         return False
     
     async def _handle_reload(service):
         """Handle reload service call."""
-        _LOGGER.info("Service %s.reload called: reloading integration", DOMAIN)
+        _logger.info("Service %s.reload called: reloading integration", DOMAIN)
 
         current_entries = hass.config_entries.async_entries(DOMAIN)
 
