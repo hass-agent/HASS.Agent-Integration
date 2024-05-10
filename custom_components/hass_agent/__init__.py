@@ -173,7 +173,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "media_player": False,  # unsupported for the moment
         }
 
-        hass.async_create_task(handle_apis_changed(hass, entry, apis))
+        hass.async_create_background_task(handle_apis_changed(hass, entry, apis))
         hass.data[DOMAIN][entry.entry_id]["apis"] = apis
 
     else:
@@ -181,6 +181,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         sub_state = hass.data[DOMAIN][entry.entry_id]["internal_mqtt"]
 
+        @callback
         async def updated(message: ReceiveMessage):
             payload = json.loads(message.payload)
             cached = hass.data[DOMAIN][entry.entry_id]["apis"]
@@ -189,7 +190,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await update_device_info(hass, entry, payload)
 
             if cached != apis:
-                hass.async_create_task(handle_apis_changed(hass, entry, apis))
+                hass.async_create_background_task(handle_apis_changed(hass, entry, apis), "hass.agent-mqtt")
                 hass.data[DOMAIN][entry.entry_id]["apis"] = apis
 
         sub_state = async_prepare_subscribe_topics(
