@@ -83,6 +83,7 @@ async def async_wait_for_mqtt_client(hass: HomeAssistant) -> bool:
         return False
 
 async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
+    _logger.debug("api changed for: %s", entry.entry_id)
     if apis is not None:
 
         device_registry = dr.async_get(hass)
@@ -142,6 +143,8 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HASS.Agent from a config entry."""
+
+    _logger.debug("setting up device from config entry: %s", entry.entry_id)
 
     hass.data.setdefault(DOMAIN, {})
 
@@ -214,6 +217,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
+    _logger.debug("unloading device: %s", entry.entry_id)
+
     # known issue: notify does not always unload
 
     loaded = hass.data[DOMAIN][entry.entry_id].get("loaded", None)
@@ -249,6 +254,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up hass_agent integration."""
+
+    _logger.debug("integration setup start")
+
     hass.http.register_view(MediaPlayerThumbnailView(hass))
 
     # Make sure MQTT integration is enabled and the client is available
