@@ -83,7 +83,7 @@ async def async_wait_for_mqtt_client(hass: HomeAssistant) -> bool:
         return False
 
 async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
-    _logger.debug("api changed for: %s", entry.entry_id)
+    _logger.debug("api changed for: %s", entry.unique_id)
     if apis is not None:
 
         device_registry = dr.async_get(hass)
@@ -92,15 +92,10 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
         )
 
         media_player = apis.get("media_player", False)
-        is_media_player_loaded = hass.data[DOMAIN][entry.entry_id]["loaded"][
-            "media_player"
-        ]
+        is_media_player_loaded = hass.data[DOMAIN][entry.entry_id]["loaded"]["media_player"]
 
         notifications = apis.get("notifications", False)
-
-        is_notifications_loaded = hass.data[DOMAIN][entry.entry_id]["loaded"][
-            "notifications"
-        ]
+        is_notifications_loaded = hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"]
 
         if media_player and is_media_player_loaded is False:
             _logger.debug("loading media_player for device: %s", device.name)
