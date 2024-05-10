@@ -272,7 +272,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
         await asyncio.gather(*reload_tasks)
 
-    hass.helpers.service.async_register_admin_service(
+    async_register_admin_service(
         DOMAIN,
         SERVICE_RELOAD,
         _handle_reload,
