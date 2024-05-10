@@ -98,16 +98,13 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
         is_notifications_loaded = hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"]
 
         if media_player and is_media_player_loaded is False:
-            _logger.debug("loading media_player for device: %s", device.name)
+            _logger.debug("loading media_player for device: %s [%s]", device.name, device.serial_number)
             await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
             hass.data[DOMAIN][entry.entry_id]["loaded"]["media_player"] = True
         else:
             if is_media_player_loaded:
-                _logger.debug(
-                    "unloading media_player for device: %s",
-                    device.name,
-                )
+                _logger.debug("unloading media_player for device: %s [%s]", device.name, device.serial_number)
                 await hass.config_entries.async_forward_entry_unload(
                     entry, Platform.MEDIA_PLAYER
                 )
@@ -115,7 +112,7 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
                 hass.data[DOMAIN][entry.entry_id]["loaded"]["media_player"] = False
 
         if notifications and is_notifications_loaded is False:
-            _logger.debug("loading notify for device: %s", device.name)
+            _logger.debug("loading notify for device: %s [%s]", device.name, device.serial_number)
 
             hass.async_create_task(
                 discovery.async_load_platform(
@@ -129,7 +126,7 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
             hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"] = True
         else:
             if is_notifications_loaded:
-                _logger.debug("unloading notify for device: %s", device.name)
+                _logger.debug("unloading notify for device: %s [%s]", device.name, device.serial_number)
                 await hass.config_entries.async_unload_platforms(
                     entry, [Platform.NOTIFY]
                 )
@@ -139,7 +136,7 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HASS.Agent from a config entry."""
 
-    _logger.debug("setting up device from config entry: %s", entry.entry_id)
+    _logger.debug("setting up device from config entry: %s [%s]", entry.data["device"]["name"], entry.unique_id)
 
     hass.data.setdefault(DOMAIN, {})
 
@@ -212,7 +209,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
-    _logger.debug("unloading device: %s", entry.entry_id)
+    deviceName = entry.data["device"]["name"]
+
+    _logger.debug("unloading device: %s [%s]", deviceName, entry.unique_id)
 
     # known issue: notify does not always unload
 
@@ -220,22 +219,21 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if loaded is not None:
         notifications = loaded.get("notifications", False)
-
         media_player = loaded.get("media_player", False)
 
         if notifications:
             if unload_ok := await hass.config_entries.async_unload_platforms(
                 entry, [Platform.NOTIFY]
             ):
-                _logger.debug("unloaded %s for %s", "notify", entry.unique_id)
+                _logger.debug("unloaded notifications for: %s [%s]", deviceName, entry.unique_id)
 
         if media_player:
             if unload_ok := await hass.config_entries.async_unload_platforms(
                 entry, [Platform.MEDIA_PLAYER]
             ):
-                _logger.debug("unloaded %s for %s", "media_player", entry.unique_id)
+                _logger.debug("unloaded media player for: %s [%s]", deviceName, entry.unique_id)
     else:
-        _logger.warning("config entry (%s) with has no apis loaded?", entry.entry_id)
+        _logger.warning("config entry (%s) with has no apis loaded?", entry.unique_id)
 
     url = entry.data.get(CONF_URL, None)
     if url is None:
