@@ -29,7 +29,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback, ServiceCall, async_get_hass
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import discovery
-from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import slugify    
 
@@ -270,11 +269,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
         await asyncio.gather(*reload_tasks)
 
-    # async_register_admin_service(
-    #     hass,
-    #     DOMAIN,
-    #     SERVICE_RELOAD,
-    #     _handle_reload,
-    # )
+    hass.services.async_register(
+        hass,
+        DOMAIN,
+        SERVICE_RELOAD,
+        _handle_reload,
+    )
 
     return True
