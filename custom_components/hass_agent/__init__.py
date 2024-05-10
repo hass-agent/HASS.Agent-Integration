@@ -26,7 +26,7 @@ from homeassistant.const import (
     Platform, 
     SERVICE_RELOAD,
 )
-from homeassistant.core import HomeAssistant, ServiceCall, async_get_hass
+from homeassistant.core import HomeAssistant, callback, ServiceCall, async_get_hass
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import discovery
 from homeassistant.helpers.service import async_register_admin_service
