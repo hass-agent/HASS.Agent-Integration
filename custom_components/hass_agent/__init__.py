@@ -98,13 +98,13 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
         is_notifications_loaded = hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"]
 
         if media_player and is_media_player_loaded is False:
-            _logger.debug("loading media_player for device: %s [%s]", device.name, device.serial_number)
+            _logger.debug("loading media player for device: %s [%s]", device.name, entry.unique_id)
             await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
             hass.data[DOMAIN][entry.entry_id]["loaded"]["media_player"] = True
         else:
             if is_media_player_loaded:
-                _logger.debug("unloading media_player for device: %s [%s]", device.name, device.serial_number)
+                _logger.debug("unloading media player for device: %s [%s]", device.name, entry.unique_id)
                 await hass.config_entries.async_forward_entry_unload(
                     entry, Platform.MEDIA_PLAYER
                 )
@@ -112,7 +112,7 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
                 hass.data[DOMAIN][entry.entry_id]["loaded"]["media_player"] = False
 
         if notifications and is_notifications_loaded is False:
-            _logger.debug("loading notify for device: %s [%s]", device.name, device.serial_number)
+            _logger.debug("loading notifications for device: %s [%s]", device.name, entry.unique_id)
 
             hass.async_create_task(
                 discovery.async_load_platform(
@@ -126,7 +126,7 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
             hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"] = True
         else:
             if is_notifications_loaded:
-                _logger.debug("unloading notify for device: %s [%s]", device.name, device.serial_number)
+                _logger.debug("unloading notifications for device: %s [%s]", device.name, entry.unique_id)
                 await hass.config_entries.async_unload_platforms(
                     entry, [Platform.NOTIFY]
                 )
