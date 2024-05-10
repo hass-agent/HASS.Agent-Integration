@@ -34,9 +34,6 @@ from homeassistant.util import slugify
 
 from .const import DOMAIN
 
-DOMAIN = "hass_agent"
-FOLDER = "hass_agent"
-
 PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 
 _logger = logging.getLogger(__name__)
@@ -270,7 +267,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         await asyncio.gather(*reload_tasks)
 
     hass.services.async_register(
-        hass,
         DOMAIN,
         SERVICE_RELOAD,
         _handle_reload,
