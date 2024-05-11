@@ -23,7 +23,7 @@ Windows device acting as a media player (for music and TTS messages):
 
 ![image](https://user-images.githubusercontent.com/81011038/198246217-cce288be-bbb7-4c5f-baff-510cc99c30b1.png)
 
-Sending interactable notifications:
+Sending actionable notifications:
 
 ![image](https://user-images.githubusercontent.com/81011038/190643738-724dac45-4d03-4a19-a0e6-3a59b5de0aad.png)
 
