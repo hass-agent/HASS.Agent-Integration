@@ -76,14 +76,14 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         serial_number = payload["serial_number"]
 
-        _logger.debug(
-            "found device. Name: %s, Serial Number: %s", device_name, serial_number
-        )
+        _logger.debug("found device. Name: %s, Serial Number: %s", device_name, serial_number)
 
         self._data = {"device": payload["device"], "apis": payload["apis"]}
 
         for config in self._async_current_entries():
+            _logger.debug("device: %s, SN: %s, UID: %s", device_name, serial_number, config.unique_id) # TODO(Amadeo): remove
             if config.unique_id == serial_number:
+                _logger.debug("device %s, serial number: %s already configured, ignoring", device_name, serial_number)
                 return self.async_abort(reason="already_configured")
 
         await self.async_set_unique_id(serial_number)
