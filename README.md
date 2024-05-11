@@ -34,8 +34,7 @@ The supported way to install HASS.Agent integration is through HACS. This versio
 If you have the **original version of HASS.Agent integration** installed (either version), **please remove it** before proceeding further and restart Home Assistant.
 
 1. Add "HASS.Agent 2 Integration" repository - https://github.com/hass-agent/HASS.Agent-Integration - as a custom HACS integration repository.
- ![i0mENM](https://github.com/amadeo-alex/HASS.Agent-Integration/assets/68441479/13e0f132-9b01-46f0-97c9-05f33f214aaf)
- <img src="https://github.com/amadeo-alex/HASS.Agent-Integration/assets/68441479/438a0dd7-975f-4cf3-a138-887fd4cf9eee" width="300" />
+ ![i0mENM](https://github.com/amadeo-alex/HASS.Agent-Integration/assets/68441479/13e0f132-9b01-46f0-97c9-05f33f214aaf) <img src="https://github.com/amadeo-alex/HASS.Agent-Integration/assets/68441479/438a0dd7-975f-4cf3-a138-887fd4cf9eee" width="300" />
 
 3. Install "HASS.Agent 2 Integration" from HACS (including restart), as you would with any other integration.
 4. Configure HASS.Agent devices when they are discovered.
