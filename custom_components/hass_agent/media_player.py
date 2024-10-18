@@ -249,7 +249,7 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
 
     async def async_mute_volume(self, mute):
         """Mute the volume"""
-        await self._send_command("mute")
+        await self._send_command(mute)
 
     async def async_media_play(self):
         """Send play command"""
