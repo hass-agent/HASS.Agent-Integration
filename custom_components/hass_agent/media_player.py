@@ -25,7 +25,7 @@ from homeassistant.components.media_player import (
     MediaPlayerEntityFeature,
 )
 
-from homeassistant.components.media_player.const import MEDIA_TYPE_MUSIC
+from homeassistant.components.media_player.const import MediaType
 
 from homeassistant.components.media_player.browse_media import (
     BrowseMedia,
@@ -232,7 +232,7 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
     @property
     def media_content_type(self):
         """Content type of current playing media"""
-        return MEDIA_TYPE_MUSIC
+        return MediaType.MUSIC
 
     async def async_media_seek(self, position: float) -> None:
         self._attr_media_position = position
@@ -293,7 +293,7 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
             _logger.error(
                 "Invalid media type %r. Only %s is supported!",
                 media_type,
-                MEDIA_TYPE_MUSIC,
+                MediaType.MUSIC,
             )
             return
 
