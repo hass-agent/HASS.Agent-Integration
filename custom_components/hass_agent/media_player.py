@@ -25,7 +25,7 @@ from homeassistant.components.media_player import (
     MediaPlayerEntityFeature,
 )
 
-from homeassistant.components.media_player.const import MEDIA_TYPE_MUSIC
+from homeassistant.components.media_player.const import MediaType
 
 from homeassistant.components.media_player.browse_media import (
     BrowseMedia,
@@ -232,7 +232,7 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
     @property
     def media_content_type(self):
         """Content type of current playing media"""
-        return MEDIA_TYPE_MUSIC
+        return MediaType.MUSIC
 
     async def async_media_seek(self, position: float) -> None:
         self._attr_media_position = position
@@ -249,7 +249,7 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
 
     async def async_mute_volume(self, mute):
         """Mute the volume"""
-        await self._send_command("mute")
+        await self._send_command("mute", mute)
 
     async def async_media_play(self):
         """Send play command"""
@@ -293,12 +293,12 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
             _logger.error(
                 "Invalid media type %r. Only %s is supported!",
                 media_type,
-                MEDIA_TYPE_MUSIC,
+                MediaType.MUSIC,
             )
             return
 
         if media_source.is_media_source_id(media_id):
-            play_item = await media_source.async_resolve_media(self.hass, media_id)
+            play_item = await media_source.async_resolve_media(self.hass, media_id, self.entity_id)
 
             # play_item returns a relative URL if it has to be resolved on the Home Assistant host
             # This call will turn it into a full URL
