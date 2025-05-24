@@ -174,6 +174,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         @callback
         async def updated(message: ReceiveMessage):
+            if not message.payload:
+                _logger.debug("received empty update message on '%s', ignoring", message.topic)
+                return
+
             payload = json.loads(message.payload)
             cached = hass.data[DOMAIN][entry.entry_id]["apis"]
             apis = payload["apis"]
