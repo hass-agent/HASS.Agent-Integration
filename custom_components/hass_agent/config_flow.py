@@ -69,6 +69,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_mqtt(self, discovery_info: MqttServiceInfo) -> FlowResult:
         """Handle a flow initialized by MQTT discovery."""
+        if not discovery_info.payload:
+            _logger.debug("received empty discovery message on '%s', ignoring", discovery_info.topic)
+            return self.async_abort(reason="not_supported")
+
         device_name = discovery_info.topic.split("hass.agent/devices/")[1]
 
         payload = json.loads(discovery_info.payload)
