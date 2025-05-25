@@ -94,6 +94,10 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
     @callback
     def updated(self, message: ReceiveMessage):
         """Updates the media player with new data from MQTT"""
+        if not message.payload:
+            _logger.debug("received empty update message on '%s', ignoring", message.topic)
+            return
+            
         payload = json.loads(message.payload)
 
         self._state = payload["state"].lower()
