@@ -223,28 +223,4 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.http.register_view(MediaPlayerThumbnailView(hass))
 
-    # Make sure MQTT integration is enabled and the client is available
-    # if not await mqtt.async_wait_for_mqtt_client(hass):
-    #    _logger.error("MQTT integration is not available")
-    #    return False
-
-    # async def _handle_reload(service):
-    #     """Handle reload service call."""
-    #     _logger.info("Service %s.reload called: reloading integration", DOMAIN)
-
-    #     current_entries = hass.config_entries.async_entries(DOMAIN)
-
-    #     reload_tasks = [
-    #         hass.config_entries.async_reload(entry.entry_id)
-    #         for entry in current_entries
-    #     ]
-
-    #     await asyncio.gather(*reload_tasks)
-
-    # hass.services.async_register(
-    #     DOMAIN,
-    #     SERVICE_RELOAD,
-    #     _handle_reload,
-    # )
-
     return True
