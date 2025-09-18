@@ -49,35 +49,6 @@ async def update_device_info(hass: HomeAssistant, entry: ConfigEntry, new_device
         sw_version=new_device_info["device"]["sw_version"],
     )
 
-async def async_wait_for_mqtt_client(hass: HomeAssistant) -> bool:
-    """Wait for the MQTT client to become available.
-    Waits when mqtt set up is in progress,
-    It is not needed that the client is connected.
-    Returns True if the mqtt client is available.
-    Returns False when the client is not available.
-    """
-    if not mqtt_config_entry_enabled(hass):
-        return False
-
-    entry = hass.config_entries.async_entries(DOMAIN)[0]
-    if entry.state == ConfigEntryState.LOADED:
-        return True
-
-    state_reached_future: asyncio.Future[bool]
-    if DATA_MQTT_AVAILABLE not in hass.data:
-        hass.data[DATA_MQTT_AVAILABLE] = state_reached_future = asyncio.Future()
-    else:
-        state_reached_future = hass.data[DATA_MQTT_AVAILABLE]
-        if state_reached_future.done():
-            return state_reached_future.result()
-
-    try:
-        async with async_timeout.timeout(AVAILABILITY_TIMEOUT):
-            # Await the client setup or an error state was received
-            return await state_reached_future
-    except asyncio.TimeoutError:
-        return False
-
 async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
     _logger.debug("api changed for: %s", entry.unique_id)
     if apis is not None:
@@ -251,29 +222,5 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     _logger.debug("integration setup start")
 
     hass.http.register_view(MediaPlayerThumbnailView(hass))
-
-    # Make sure MQTT integration is enabled and the client is available
-    if not await mqtt.async_wait_for_mqtt_client(hass):
-        _logger.error("MQTT integration is not available")
-        return False
-    
-    # async def _handle_reload(service):
-    #     """Handle reload service call."""
-    #     _logger.info("Service %s.reload called: reloading integration", DOMAIN)
-
-    #     current_entries = hass.config_entries.async_entries(DOMAIN)
-
-    #     reload_tasks = [
-    #         hass.config_entries.async_reload(entry.entry_id)
-    #         for entry in current_entries
-    #     ]
-
-    #     await asyncio.gather(*reload_tasks)
-
-    # hass.services.async_register(
-    #     DOMAIN,
-    #     SERVICE_RELOAD,
-    #     _handle_reload,
-    # )
 
     return True
