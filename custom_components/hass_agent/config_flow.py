@@ -114,18 +114,19 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     return requests.get(f"{url}/info", timeout=10)
 
                 response = await self.hass.async_add_executor_job(get_device_info)
+                response.raise_for_status()
                 response_json = response.json()
             except Exception:
                 errors["base"] = "cannot_connect"
+            else:
+                await self.async_set_unique_id(response_json["serial_number"])
+                self._abort_if_unique_id_configured()
 
-            await self.async_set_unique_id(response_json["serial_number"])
-            self._abort_if_unique_id_configured()
-
-            return self.async_create_entry(
-                title=response_json["device"]["name"],
-                data={CONF_URL: url},
-                options={CONF_DEFAULT_NOTIFICATION_TITLE: ATTR_TITLE_DEFAULT},
-            )
+                return self.async_create_entry(
+                    title=response_json["device"]["name"],
+                    data={CONF_URL: url},
+                    options={CONF_DEFAULT_NOTIFICATION_TITLE: ATTR_TITLE_DEFAULT},
+                )
 
         return self.async_show_form(
             step_id="local_api",
