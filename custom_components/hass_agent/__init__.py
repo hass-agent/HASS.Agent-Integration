@@ -103,7 +103,7 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HASS.Agent from a config entry."""
 
-    _logger.debug("setting up device from config entry: %s [%s]", entry.data["device"]["name"], entry.unique_id)
+    _logger.debug("setting up device from config entry: %s [%s]", entry.title, entry.unique_id)
 
     hass.data.setdefault(DOMAIN, {})
 
