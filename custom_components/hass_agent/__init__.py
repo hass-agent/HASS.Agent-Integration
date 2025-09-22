@@ -135,7 +135,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "media_player": False,  # unsupported for the moment
         }
 
-        hass.async_create_background_task(handle_apis_changed(hass, entry, apis))
+        hass.async_create_background_task(handle_apis_changed(hass, entry, apis), "hass.agent-api")
         hass.data[DOMAIN][entry.entry_id]["apis"] = apis
 
     else:
