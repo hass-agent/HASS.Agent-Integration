@@ -83,13 +83,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._data = {"device": payload["device"], "apis": payload["apis"]}
 
-        for config in self._async_current_entries():
-            _logger.debug("device: %s, SN: %s, UID: %s", device_name, serial_number, config.unique_id) # TODO(Amadeo): remove
-            if config.unique_id == serial_number:
-                _logger.debug("device %s, serial number: %s already configured, ignoring", device_name, serial_number)
-                return self.async_abort(reason="already_configured")
-
         await self.async_set_unique_id(serial_number)
+        self._abort_if_unique_id_configured()
 
         # "hass.agent/devices/#" is hardcoded in HASS.Agent's manifest
         assert discovery_info.subscribed_topic == "hass.agent/devices/#"
@@ -115,24 +110,23 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             # serial number!
             try:
-
                 def get_device_info():
                     return requests.get(f"{url}/info", timeout=10)
 
                 response = await self.hass.async_add_executor_job(get_device_info)
-
+                response.raise_for_status()
                 response_json = response.json()
-
+            except Exception:
+                errors["base"] = "cannot_connect"
+            else:
                 await self.async_set_unique_id(response_json["serial_number"])
+                self._abort_if_unique_id_configured()
 
                 return self.async_create_entry(
                     title=response_json["device"]["name"],
                     data={CONF_URL: url},
                     options={CONF_DEFAULT_NOTIFICATION_TITLE: ATTR_TITLE_DEFAULT},
                 )
-
-            except Exception:
-                errors["base"] = "cannot_connect"
 
         return self.async_show_form(
             step_id="local_api",
