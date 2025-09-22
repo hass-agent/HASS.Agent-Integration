@@ -2,10 +2,11 @@
     "config": {
         "flow_title": "{name}",
         "abort": {
-            "no_devices_found": "No devices found on the network"
+            "no_devices_found": "No devices found on the network.",
+            "already_configured": "This device is already configured."
         },
         "error": {
-            "cannot_connect": "Failed to connect"
+            "cannot_connect": "Failed to connect to HASS.Agent"
         },
         "step": {
             "confirm": {
@@ -34,8 +35,8 @@
     },
     "device_automation": {
         "trigger_type": {
-          "notifications_mqtt": "When a notification with a specfic action has been pressed (MQTT)",
-          "notifications_event": "When a notification with a specfic action has been pressed (Event)"
+          "notifications_mqtt": "When a notification with a specific action has been pressed (MQTT)",
+          "notifications_event": "When a notification with a specific action has been pressed (Event)"
         }
     }
 }
