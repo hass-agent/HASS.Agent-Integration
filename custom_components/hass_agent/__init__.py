@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import pprint
 from collections.abc import Coroutine
 from contextlib import suppress
 import json
