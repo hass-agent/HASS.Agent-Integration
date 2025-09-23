@@ -72,9 +72,7 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
         else:
             if is_media_player_loaded:
                 _logger.debug("unloading media player for device: %s [%s]", device.name, entry.unique_id)
-                await hass.config_entries.async_forward_entry_unload(
-                    entry, Platform.MEDIA_PLAYER
-                )
+                await hass.config_entries.async_forward_entry_unload(entry, Platform.MEDIA_PLAYER)
 
                 hass.data[DOMAIN][entry.entry_id]["loaded"]["media_player"] = False
 
@@ -93,10 +91,9 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
             hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"] = True
         else:
             if is_notifications_loaded:
-                _logger.debug("unloading notifications for device: %s [%s]", device.name, entry.unique_id)
-                await hass.config_entries.async_unload_platforms(
-                    entry, [Platform.NOTIFY]
-                )
+                # _logger.debug("unloading notifications for device: %s [%s]", device.name, entry.unique_id)
+                # await hass.config_entries.async_unload_platforms(entry, [Platform.NOTIFY])
+                # NOTE(Amadeo): disabled due to "ValueError: Config entry was never loaded!" error
 
                 hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"] = False
 
@@ -180,29 +177,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
-    deviceName = entry.data["device"]["name"]
+    _logger.debug("unloading device: %s [%s]", entry.title, entry.unique_id)
 
-    _logger.debug("unloading device: %s [%s]", deviceName, entry.unique_id)
-
-    # known issue: notify does not always unload
-
+    # known issue: notify does not always unload 
+    # NOTE(Amadeo): unloading NOTIFY platform always fails, same happens for example for https://github.com/home-assistant/core/blob/dd7f7be6adee76f2add98dcca8d3ff87bceabf70/homeassistant/components/nfandroidtv/__init__.py
     loaded = hass.data[DOMAIN][entry.entry_id].get("loaded", None)
 
     if loaded is not None:
         notifications = loaded.get("notifications", False)
         media_player = loaded.get("media_player", False)
 
-        if notifications:
-            if unload_ok := await hass.config_entries.async_unload_platforms(
-                entry, [Platform.NOTIFY]
-            ):
-                _logger.debug("unloaded notifications for: %s [%s]", deviceName, entry.unique_id)
+        # if notifications:
+        #     if unload_ok := await hass.config_entries.async_unload_platforms(entry, [Platform.NOTIFY]):
+        #         _logger.debug("unloaded notifications for: %s [%s]", entry.title, entry.unique_id)
+        # NOTE(Amadeo): disabled due to "ValueError: Config entry was never loaded!" error
 
         if media_player:
-            if unload_ok := await hass.config_entries.async_unload_platforms(
-                entry, [Platform.MEDIA_PLAYER]
-            ):
-                _logger.debug("unloaded media player for: %s [%s]", deviceName, entry.unique_id)
+            if unload_ok := await hass.config_entries.async_unload_platforms(entry, [Platform.MEDIA_PLAYER]):
+                _logger.debug("unloaded media player for: %s [%s]", entry.title, entry.unique_id)
     else:
         _logger.warning("config entry (%s) with has no apis loaded?", entry.unique_id)
 
