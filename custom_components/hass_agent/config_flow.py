@@ -94,7 +94,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 _logger.debug(
                     "device ignored, discovery message is stale (older than 10 minutes)"
                 )
-                self.async_abort(reason="stale")
+                return self.async_abort(reason="stale")
 
         self._data = {"device": payload["device"], "apis": payload["apis"]}
 
