@@ -4,6 +4,7 @@ import json
 import logging
 import requests
 import voluptuous as vol
+import datetime
 
 from typing import Any
 from homeassistant.components.notify import ATTR_TITLE_DEFAULT
@@ -78,8 +79,14 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         payload = json.loads(discovery_info.payload)
 
         serial_number = payload["serial_number"]
-
         _logger.debug("found device. Name: %s, Serial Number: %s", device_name, serial_number)
+
+        if 'timestamp' in payload:
+            timestamp = datetime.datetime.fromtimestamp(payload["timestamp"])
+            deltaMinutes = (datetime.datetime.now() - timestamp) / 60
+            if deltaMinutes < 10:
+                _logger.debug("device ignored, discovery message is stale (older than 10 minutes)")
+                self.async_abort(reason="stale")
 
         self._data = {"device": payload["device"], "apis": payload["apis"]}
 
