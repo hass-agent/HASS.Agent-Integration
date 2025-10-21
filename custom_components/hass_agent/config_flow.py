@@ -1,4 +1,5 @@
 """Config flow for HASS.Agent"""
+
 from __future__ import annotations
 import json
 import logging
@@ -71,7 +72,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_mqtt(self, discovery_info: MqttServiceInfo) -> FlowResult:
         """Handle a flow initialized by MQTT discovery."""
         if not discovery_info.payload:
-            _logger.debug("received empty discovery message on '%s', ignoring", discovery_info.topic)
+            _logger.debug(
+                "received empty discovery message on '%s', ignoring",
+                discovery_info.topic,
+            )
             return self.async_abort(reason="not_supported")
 
         device_name = discovery_info.topic.split("hass.agent/devices/")[1]
@@ -79,13 +83,17 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         payload = json.loads(discovery_info.payload)
 
         serial_number = payload["serial_number"]
-        _logger.debug("found device. Name: %s, Serial Number: %s", device_name, serial_number)
+        _logger.debug(
+            "found device. Name: %s, Serial Number: %s", device_name, serial_number
+        )
 
-        if 'timestamp' in payload:
+        if "timestamp" in payload:
             timestamp = datetime.datetime.fromtimestamp(payload["timestamp"])
-            deltaMinutes = (datetime.datetime.now() - timestamp) / 60
-            if deltaMinutes > datetime.timedelta(minutes=10):
-                _logger.debug("device ignored, discovery message is stale (older than 10 minutes)")
+            deltaMinutes = ((datetime.datetime.now() - timestamp).total_seconds()) / 60
+            if deltaMinutes > 10:
+                _logger.debug(
+                    "device ignored, discovery message is stale (older than 10 minutes)"
+                )
                 self.async_abort(reason="stale")
 
         self._data = {"device": payload["device"], "apis": payload["apis"]}
@@ -103,7 +111,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_local_api(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-
         errors = {}
 
         if user_input is not None:
@@ -117,6 +124,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             # serial number!
             try:
+
                 def get_device_info():
                     return requests.get(f"{url}/info", timeout=10)
 
