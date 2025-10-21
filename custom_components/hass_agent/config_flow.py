@@ -84,7 +84,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if 'timestamp' in payload:
             timestamp = datetime.datetime.fromtimestamp(payload["timestamp"])
             deltaMinutes = (datetime.datetime.now() - timestamp) / 60
-            if deltaMinutes < datetime.timedelta(minutes=10):
+            if deltaMinutes > datetime.timedelta(minutes=10):
                 _logger.debug("device ignored, discovery message is stale (older than 10 minutes)")
                 self.async_abort(reason="stale")
 
