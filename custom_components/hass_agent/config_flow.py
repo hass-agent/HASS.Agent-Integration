@@ -73,10 +73,9 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             _logger.debug("received empty discovery message on '%s', ignoring", discovery_info.topic)
             return self.async_abort(reason="not_supported")
 
-        device_name = discovery_info.topic.split("hass.agent/devices/")[1]
-
         payload = json.loads(discovery_info.payload)
 
+        device_name = payload["device"]["name"]
         serial_number = payload["serial_number"]
 
         _logger.debug("found device. Name: %s, Serial Number: %s", device_name, serial_number)
@@ -84,6 +83,15 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._data = {"device": payload["device"], "apis": payload["apis"]}
 
         await self.async_set_unique_id(serial_number)
+
+        if entry := self.hass.config_entries.async_entry_for_domain_unique_id(
+            DOMAIN, serial_number
+        ):
+            self.hass.config_entries.async_update_entry(
+                entry, title=payload["device"]["name"], data=self._data
+            )
+            self.hass.config_entries.async_schedule_reload(entry.entry_id)
+
         self._abort_if_unique_id_configured()
 
         # "hass.agent/devices/#" is hardcoded in HASS.Agent's manifest

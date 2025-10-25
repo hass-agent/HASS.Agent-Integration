@@ -206,7 +206,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN].pop(entry.entry_id)
 
-    return unload_ok
+    return True
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up hass_agent integration."""
