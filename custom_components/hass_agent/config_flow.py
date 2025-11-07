@@ -1,4 +1,5 @@
 """Config flow for HASS.Agent"""
+
 from __future__ import annotations
 import json
 import logging
@@ -14,7 +15,7 @@ from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SSL, CONF_
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.service_info.mqtt import MqttServiceInfo
 
-from .const import DOMAIN, CONF_DEFAULT_NOTIFICATION_TITLE
+from .const import DOMAIN, CONF_DEFAULT_NOTIFICATION_TITLE, CONF_ORIGINAL_DEVICE_NAME
 
 _logger = logging.getLogger(__name__)
 
@@ -23,14 +24,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self) -> None:
         """Initialize options flow."""
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
-            user_input[CONF_DEFAULT_NOTIFICATION_TITLE] = user_input[
-                CONF_DEFAULT_NOTIFICATION_TITLE
-            ].strip()
+            user_input[CONF_DEFAULT_NOTIFICATION_TITLE] = user_input[CONF_DEFAULT_NOTIFICATION_TITLE].strip()
 
             return self.async_create_entry(title="", data=user_input)
 
@@ -40,9 +37,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Optional(
                         CONF_DEFAULT_NOTIFICATION_TITLE,
-                        default=self.config_entry.options.get(
-                            CONF_DEFAULT_NOTIFICATION_TITLE, ATTR_TITLE_DEFAULT
-                        ),
+                        default=self.config_entry.options.get(CONF_DEFAULT_NOTIFICATION_TITLE, ATTR_TITLE_DEFAULT),
                     ): str
                 }
             ),
@@ -70,7 +65,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_mqtt(self, discovery_info: MqttServiceInfo) -> FlowResult:
         """Handle a flow initialized by MQTT discovery."""
         if not discovery_info.payload:
-            _logger.debug("received empty discovery message on '%s', ignoring", discovery_info.topic)
+            _logger.debug(
+                "received empty discovery message on '%s', ignoring",
+                discovery_info.topic,
+            )
             return self.async_abort(reason="not_supported")
 
         payload = json.loads(discovery_info.payload)
@@ -82,15 +80,21 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._data = {"device": payload["device"], "apis": payload["apis"]}
 
-        await self.async_set_unique_id(serial_number)
+        entry = await self.async_set_unique_id(serial_number)
+        if CONF_ORIGINAL_DEVICE_NAME not in entry.data:
+            self._data[CONF_ORIGINAL_DEVICE_NAME] = device_name
 
-        if entry := self.hass.config_entries.async_entry_for_domain_unique_id(
-            DOMAIN, serial_number
-        ):
+        if entry:
+            reload_required = device_name != entry.title
+
             self.hass.config_entries.async_update_entry(
-                entry, title=payload["device"]["name"], data=self._data
+                entry,
+                title=payload["device"]["name"],
+                data={**entry.data, **self._data},
             )
-            self.hass.config_entries.async_schedule_reload(entry.entry_id)
+
+            if reload_required:
+                self.hass.config_entries.async_schedule_reload(entry.entry_id)
 
         self._abort_if_unique_id_configured()
 
@@ -101,10 +105,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_confirm()
 
-    async def async_step_local_api(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-
+    async def async_step_local_api(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         errors = {}
 
         if user_input is not None:
@@ -118,6 +119,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             # serial number!
             try:
+
                 def get_device_info():
                     return requests.get(f"{url}/info", timeout=10)
 
@@ -149,14 +151,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         return await self.async_step_local_api()
 
-    async def async_step_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_confirm(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Confirm the setup."""
 
         if user_input is not None:
