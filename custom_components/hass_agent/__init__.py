@@ -33,7 +33,7 @@ from homeassistant.helpers import discovery
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import slugify
 
-from .const import DOMAIN, CONF_ORIGINAL_DEVICE_NAME, CONF_CURRENT_DEVICE_NAME
+from .const import DOMAIN, CONF_ORIGINAL_DEVICE_NAME, CONF_DEVICE_NAME
 
 PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 
@@ -94,9 +94,10 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
                     DOMAIN,
                     {
                         CONF_ID: entry.entry_id,
-                        CONF_NAME: entry.data[CONF_ORIGINAL_DEVICE_NAME],
-                        CONF_ORIGINAL_DEVICE_NAME: entry.data[CONF_ORIGINAL_DEVICE_NAME],
-                        CONF_CURRENT_DEVICE_NAME: device.name,
+                        CONF_NAME: entry.data[  # Note(Amadeo): CONF_NAME decides of "nofity.<device>" name, needs to be set to the original one
+                            CONF_ORIGINAL_DEVICE_NAME
+                        ],
+                        CONF_DEVICE_NAME: device.name,  # Note(Amadeo): since CONF_NAME is used for the old name, we need to pass on the changed name for MQTT notify call
                     },
                     {},
                 )

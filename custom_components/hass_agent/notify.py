@@ -26,8 +26,7 @@ from homeassistant.const import (
 
 from .const import (
     CONF_DEFAULT_NOTIFICATION_TITLE,
-    CONF_ORIGINAL_DEVICE_NAME,
-    CONF_CURRENT_DEVICE_NAME,
+    CONF_DEVICE_NAME,
 )
 
 _logger = logging.getLogger(__name__)
@@ -42,8 +41,8 @@ def get_service(hass, config, discovery_info=None):
 
     return HassAgentNotificationService(
         hass,
-        discovery_info[CONF_CURRENT_DEVICE_NAME],
-        discovery_info[CONF_ORIGINAL_DEVICE_NAME],
+        discovery_info[CONF_DEVICE_NAME],
+        discovery_info[CONF_NAME],
         entry_id,
     )
 
@@ -51,11 +50,10 @@ def get_service(hass, config, discovery_info=None):
 class HassAgentNotificationService(BaseNotificationService):
     """Implementation of the HASS Agent notification service"""
 
-    def __init__(self, hass, name, original_device_name, entry_id):
+    def __init__(self, hass, device_name, service_name, entry_id):
         """Initialize the service."""
-        self._service_name = original_device_name
-        self._device_name = name
-        self._original_device_name = original_device_name
+        self._service_name = service_name
+        self._device_name = device_name
         self._entry_id = entry_id
         self._hass = hass
 
