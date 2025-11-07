@@ -14,8 +14,9 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SSL, CONF_URL
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.service_info.mqtt import MqttServiceInfo
+from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 
-from .const import DOMAIN, CONF_DEFAULT_NOTIFICATION_TITLE, CONF_ORIGINAL_DEVICE_NAME
+from .const import DOMAIN, CONF_DEFAULT_NOTIFICATION_TITLE, CONF_ORIGINAL_DEVICE_NAME, CONF_DEVICE_NAME
 
 _logger = logging.getLogger(__name__)
 
@@ -81,7 +82,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._data = {"device": payload["device"], "apis": payload["apis"]}
 
         entry = await self.async_set_unique_id(serial_number)
-        if CONF_ORIGINAL_DEVICE_NAME not in entry.data:
+        if not entry or (CONF_ORIGINAL_DEVICE_NAME not in entry.data):
             self._data[CONF_ORIGINAL_DEVICE_NAME] = device_name
 
         if entry:
@@ -95,6 +96,19 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             if reload_required:
                 self.hass.config_entries.async_schedule_reload(entry.entry_id)
+
+                async_create_issue(
+                    hass=self.hass,
+                    domain=DOMAIN,
+                    issue_id=f"restart_required_{device_name}",
+                    data={CONF_DEVICE_NAME: device_name},
+                    is_fixable=True,
+                    severity=IssueSeverity.WARNING,
+                    translation_key="restart_required",
+                    translation_placeholders={
+                        "name": device_name,
+                    },
+                )
 
         self._abort_if_unique_id_configured()
 

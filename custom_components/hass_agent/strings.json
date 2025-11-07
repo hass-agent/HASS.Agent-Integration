@@ -1,44 +1,57 @@
 {
-  "config": {
-    "flow_title": "{name}",
-    "step": {
-      "confirm": {
-        "title": "[%key:common::config_flow::title::confirm%]",
-        "description": "[%key:common::config_flow::description::confirm%]"
-      },
-      "local_api": {
-        "title": "[%key:common::config_flow::title::local_api%]",
-        "description": "[%key:common::config_flow::description::local_api%]",
-        "data": {
-          "host": "[%key:common::config_flow::data::host%]",
-          "port": "[%key:common::config_flow::data::port%]",
-          "ssl": "[%key:common::config_flow::data::ssl%]"
-        }
-      }
-    },
-    "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
-    },
-    "abort": {
-      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
-      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
-    }
-  },
-  "options": {
-    "step": {
-        "init": {
-            "data": {
-                "default_notification_title": "[%key:common::options::init::default_notification_title%]"
+    "config": {
+        "flow_title": "{name}",
+        "step": {
+            "confirm": {
+                "title": "[%key:common::config_flow::title::confirm%]",
+                "description": "[%key:common::config_flow::description::confirm%]"
             },
-            "title": "[%key:common::options::init::title%]"
+            "local_api": {
+                "title": "[%key:common::config_flow::title::local_api%]",
+                "description": "[%key:common::config_flow::description::local_api%]",
+                "data": {
+                    "host": "[%key:common::config_flow::data::host%]",
+                    "port": "[%key:common::config_flow::data::port%]",
+                    "ssl": "[%key:common::config_flow::data::ssl%]"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
+        },
+        "abort": {
+            "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+            "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
+            "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "default_notification_title": "[%key:common::options::init::default_notification_title%]"
+                },
+                "title": "[%key:common::options::init::title%]"
+            }
+        }
+    },
+    "device_automation": {
+        "trigger_type": {
+            "notifications_mqtt": "[%key:component::hass_agent::device_automation::trigger_type::notifications_mqtt%]",
+            "notifications_event": "[%key:component::hass_agent::device_automation::trigger_type::notifications_event%]"
+        }
+    },
+    "issues": {
+        "restart_required": {
+            "title": "[%key:component::hass_agent::issues::restart_required::title%]",
+            "fix_flow": {
+                "step": {
+                    "confirm_restart": {
+                        "title": "[%key:component::hass_agent::issues::restart_required::fix_flow::confirm_restart::title%]",
+                        "description": "[%key:component::hass_agent::issues::restart_required::fix_flow::confirm_restart::description%]"
+                    }
+                }
+            }
         }
     }
-  },
-  "device_automation": {
-    "trigger_type": {
-      "notifications_mqtt": "[%key:component::hass_agent::device_automation::trigger_type::notifications_mqtt%]",
-      "notifications_event": "[%key:component::hass_agent::device_automation::trigger_type::notifications_event%]"
-    }
-  }
 }
