@@ -1,4 +1,5 @@
 """Config flow for HASS.Agent"""
+
 from __future__ import annotations
 import json
 import logging
@@ -13,8 +14,9 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SSL, CONF_URL
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.service_info.mqtt import MqttServiceInfo
+from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 
-from .const import DOMAIN, CONF_DEFAULT_NOTIFICATION_TITLE
+from .const import DOMAIN, CONF_DEFAULT_NOTIFICATION_TITLE, CONF_ORIGINAL_DEVICE_NAME, CONF_DEVICE_NAME
 
 _logger = logging.getLogger(__name__)
 
@@ -23,14 +25,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self) -> None:
         """Initialize options flow."""
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
-            user_input[CONF_DEFAULT_NOTIFICATION_TITLE] = user_input[
-                CONF_DEFAULT_NOTIFICATION_TITLE
-            ].strip()
+            user_input[CONF_DEFAULT_NOTIFICATION_TITLE] = user_input[CONF_DEFAULT_NOTIFICATION_TITLE].strip()
 
             return self.async_create_entry(title="", data=user_input)
 
@@ -40,9 +38,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Optional(
                         CONF_DEFAULT_NOTIFICATION_TITLE,
-                        default=self.config_entry.options.get(
-                            CONF_DEFAULT_NOTIFICATION_TITLE, ATTR_TITLE_DEFAULT
-                        ),
+                        default=self.config_entry.options.get(CONF_DEFAULT_NOTIFICATION_TITLE, ATTR_TITLE_DEFAULT),
                     ): str
                 }
             ),
@@ -70,20 +66,50 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_mqtt(self, discovery_info: MqttServiceInfo) -> FlowResult:
         """Handle a flow initialized by MQTT discovery."""
         if not discovery_info.payload:
-            _logger.debug("received empty discovery message on '%s', ignoring", discovery_info.topic)
+            _logger.debug(
+                "received empty discovery message on '%s', ignoring",
+                discovery_info.topic,
+            )
             return self.async_abort(reason="not_supported")
-
-        device_name = discovery_info.topic.split("hass.agent/devices/")[1]
 
         payload = json.loads(discovery_info.payload)
 
+        device_name = payload["device"]["name"]
         serial_number = payload["serial_number"]
 
         _logger.debug("found device. Name: %s, Serial Number: %s", device_name, serial_number)
 
         self._data = {"device": payload["device"], "apis": payload["apis"]}
 
-        await self.async_set_unique_id(serial_number)
+        entry = await self.async_set_unique_id(serial_number)
+        if not entry or (CONF_ORIGINAL_DEVICE_NAME not in entry.data):
+            self._data[CONF_ORIGINAL_DEVICE_NAME] = device_name
+
+        if entry:
+            reload_required = device_name != entry.title
+
+            self.hass.config_entries.async_update_entry(
+                entry,
+                title=payload["device"]["name"],
+                data={**entry.data, **self._data},
+            )
+
+            if reload_required:
+                self.hass.config_entries.async_schedule_reload(entry.entry_id)
+
+                async_create_issue(
+                    hass=self.hass,
+                    domain=DOMAIN,
+                    issue_id=f"restart_required_{device_name}",
+                    data={CONF_DEVICE_NAME: device_name},
+                    is_fixable=True,
+                    severity=IssueSeverity.WARNING,
+                    translation_key="restart_required",
+                    translation_placeholders={
+                        "name": device_name,
+                    },
+                )
+
         self._abort_if_unique_id_configured()
 
         # "hass.agent/devices/#" is hardcoded in HASS.Agent's manifest
@@ -93,10 +119,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_confirm()
 
-    async def async_step_local_api(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-
+    async def async_step_local_api(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         errors = {}
 
         if user_input is not None:
@@ -110,6 +133,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             # serial number!
             try:
+
                 def get_device_info():
                     return requests.get(f"{url}/info", timeout=10)
 
@@ -141,14 +165,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         return await self.async_step_local_api()
 
-    async def async_step_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_confirm(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Confirm the setup."""
 
         if user_input is not None:

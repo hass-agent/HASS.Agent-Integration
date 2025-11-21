@@ -24,7 +24,10 @@ from homeassistant.const import (
     CONF_URL,
 )
 
-from .const import CONF_DEFAULT_NOTIFICATION_TITLE
+from .const import (
+    CONF_DEFAULT_NOTIFICATION_TITLE,
+    CONF_DEVICE_NAME,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -36,16 +39,21 @@ def get_service(hass, config, discovery_info=None):
 
     entry_id = discovery_info.get(CONF_ID, None)
 
-    return HassAgentNotificationService(hass, discovery_info[CONF_NAME], entry_id)
+    return HassAgentNotificationService(
+        hass,
+        discovery_info[CONF_DEVICE_NAME],
+        discovery_info[CONF_NAME],
+        entry_id,
+    )
 
 
 class HassAgentNotificationService(BaseNotificationService):
     """Implementation of the HASS Agent notification service"""
 
-    def __init__(self, hass, name, entry_id):
+    def __init__(self, hass, device_name, service_name, entry_id):
         """Initialize the service."""
-        self._service_name = name
-        self._device_name = name
+        self._service_name = service_name
+        self._device_name = device_name
         self._entry_id = entry_id
         self._hass = hass
 
@@ -83,9 +91,7 @@ class HassAgentNotificationService(BaseNotificationService):
 
             elif media_source.is_media_source_id(image):
                 sourced_media = await media_source.async_resolve_media(self.hass, image)
-                sourced_media = media_source.async_process_play_media_url(
-                    self.hass, sourced_media.url
-                )
+                sourced_media = media_source.async_process_play_media_url(self.hass, sourced_media.url)
                 new_url = sourced_media
 
             if new_url is not None:
@@ -110,9 +116,7 @@ class HassAgentNotificationService(BaseNotificationService):
                     """Sends the json request"""
                     return requests.post(url, json=data, timeout=10)
 
-                response = await self.hass.async_add_executor_job(
-                    send_request, f"{entry.data[CONF_URL]}/notify", payload
-                )
+                response = await self.hass.async_add_executor_job(send_request, f"{entry.data[CONF_URL]}/notify", payload)
 
                 _logger.debug("Checking result")
 
@@ -169,8 +173,6 @@ class HassAgentNotificationService(BaseNotificationService):
                         response.reason,
                     )
                 else:
-                    _logger.debug(
-                        "Unknown response %d: %s", response.status_code, response.reason
-                    )
+                    _logger.debug("Unknown response %d: %s", response.status_code, response.reason)
             except Exception as ex:
                 _logger.debug("Error sending message: %s", ex)

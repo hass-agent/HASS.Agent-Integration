@@ -35,8 +35,21 @@
     },
     "device_automation": {
         "trigger_type": {
-          "notifications_mqtt": "When a notification with a specific action has been pressed (MQTT)",
-          "notifications_event": "When a notification with a specific action has been pressed (Event)"
+            "notifications_mqtt": "When a notification with a specific action has been pressed (MQTT)",
+            "notifications_event": "When a notification with a specific action has been pressed (Event)"
+        }
+    },
+    "issues": {
+        "restart_required": {
+            "title": "Device renamed - restart required",
+            "fix_flow": {
+                "step": {
+                    "confirm_restart": {
+                        "title": "Restart required",
+                        "description": "Device name has been changed, restart of Home Assistant is required to properly reload notify service for {name}, click submit to restart now."
+                    }
+                }
+            }
         }
     }
 }
