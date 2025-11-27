@@ -67,7 +67,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     if device is None:
         return False
 
-    async_add_entities([HassAgentMediaPlayerDevice(entry.unique_id, entry.entry_id, device, entry.data[CONF_ORIGINAL_DEVICE_NAME])])
+    original_device_name = entry.data.get(CONF_ORIGINAL_DEVICE_NAME, device.name)
+
+    async_add_entities([HassAgentMediaPlayerDevice(entry.unique_id, entry.entry_id, device, original_device_name)])
 
     return True
 
