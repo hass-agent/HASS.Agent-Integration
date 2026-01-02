@@ -143,7 +143,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             except Exception:
                 errors["base"] = "cannot_connect"
             else:
-                await self.async_set_unique_id(response_json["serial_number"])
+                entry = await self.async_set_unique_id(response_json["serial_number"])
+                if not entry or (CONF_ORIGINAL_DEVICE_NAME not in entry.data):
+                    self._data[CONF_ORIGINAL_DEVICE_NAME] = response_json["device"]["name"]
+                
                 self._abort_if_unique_id_configured()
 
                 return self.async_create_entry(
