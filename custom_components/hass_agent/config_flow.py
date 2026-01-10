@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        self._config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -41,7 +41,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Optional(
                         CONF_DEFAULT_NOTIFICATION_TITLE,
-                        default=self.config_entry.options.get(
+                        default=self._config_entry.options.get(
                             CONF_DEFAULT_NOTIFICATION_TITLE, ATTR_TITLE_DEFAULT
                         ),
                     ): str
