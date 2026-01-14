@@ -87,6 +87,8 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
                 entry.unique_id,
             )
 
+            original_device_name = entry.data.get(CONF_ORIGINAL_DEVICE_NAME, device.name)
+
             hass.async_create_task(
                 discovery.async_load_platform(
                     hass,
@@ -94,10 +96,8 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
                     DOMAIN,
                     {
                         CONF_ID: entry.entry_id,
-                        CONF_NAME: entry.data[  # Note(Amadeo): CONF_NAME decides of "nofity.<device>" name, needs to be set to the original one
-                            CONF_ORIGINAL_DEVICE_NAME
-                        ],
-                        CONF_DEVICE_NAME: device.name,  # Note(Amadeo): since CONF_NAME is used for the old name, we need to pass on the changed name for MQTT notify call
+                        CONF_NAME: original_device_name, # Note(Amadeo): CONF_NAME decides of "nofity.<device>" name, needs to be set to the original one
+                        CONF_DEVICE_NAME: device.name, # Note(Amadeo): since CONF_NAME is used for the old name, we need to pass on the changed name for MQTT notify call
                     },
                     {},
                 )
