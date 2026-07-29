@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant import data_entry_flow
 from homeassistant.components.repairs import RepairsFlow
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 import voluptuous as vol
 
 from .const import DOMAIN, CONF_DEVICE_NAME
@@ -27,6 +28,7 @@ class RestartRequiredFixFlow(RepairsFlow):
     async def async_step_confirm_restart(self, user_input: dict[str, str] | None = None) -> data_entry_flow.FlowResult:
         """Handle the confirm step of a fix flow."""
         if user_input is not None:
+            ir.async_delete_issue(self.hass, DOMAIN, self.issue_id)
             await self.hass.services.async_call("homeassistant", "restart")
             return self.async_create_entry(title="", data={})
 
