@@ -33,6 +33,8 @@ from homeassistant.helpers import discovery
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import slugify
 
+from homeassistant.helpers import issue_registry as ir
+
 from .const import DOMAIN, CONF_ORIGINAL_DEVICE_NAME, CONF_DEVICE_NAME
 
 PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
@@ -116,6 +118,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HASS.Agent from a config entry."""
 
     _logger.debug("setting up device from config entry: %s [%s]", entry.title, entry.unique_id)
+
+    # NOTE(Amadeo): sweep leftover restart_required issues from renamed devices
+    # that never got dismissed — keeps the repairs list clean
+    for d, i in list(ir.async_get(hass).issues):
+        if d == DOMAIN:
+            ir.async_delete_issue(hass, DOMAIN, i)
 
     hass.data.setdefault(DOMAIN, {})
 
