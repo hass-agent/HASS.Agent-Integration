@@ -102,12 +102,18 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
                     {},
                 )
             )
+
+            # the notify service is loaded through discovery, the notify entity through the config entry
+            await hass.config_entries.async_forward_entry_setups(entry, [Platform.NOTIFY])
+
             hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"] = True
         else:
             if is_notifications_loaded:
-                # _logger.debug("unloading notifications for device: %s [%s]", device.name, entry.unique_id)
-                # await hass.config_entries.async_unload_platforms(entry, [Platform.NOTIFY])
-                # NOTE(Amadeo): disabled due to "ValueError: Config entry was never loaded!" error
+                _logger.debug("unloading notifications for device: %s [%s]", device.name, entry.unique_id)
+
+                # only the notify entity can be unloaded, the discovery loaded notify service can't
+                # ("ValueError: Config entry was never loaded!")
+                await hass.config_entries.async_forward_entry_unload(entry, Platform.NOTIFY)
 
                 hass.data[DOMAIN][entry.entry_id]["loaded"]["notifications"] = False
 
@@ -195,18 +201,18 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     _logger.debug("unloading device: %s [%s]", entry.title, entry.unique_id)
 
-    # known issue: notify does not always unload
-    # NOTE(Amadeo): unloading NOTIFY platform always fails, same happens for example for https://github.com/home-assistant/core/blob/dd7f7be6adee76f2add98dcca8d3ff87bceabf70/homeassistant/components/nfandroidtv/__init__.py
+    # known issue: the notify service does not unload, only the notify entity does
+    # NOTE(Amadeo): unloading a discovery loaded NOTIFY platform always fails, same happens for example for https://github.com/home-assistant/core/blob/dd7f7be6adee76f2add98dcca8d3ff87bceabf70/homeassistant/components/nfandroidtv/__init__.py
     loaded = hass.data[DOMAIN][entry.entry_id].get("loaded", None)
 
     if loaded is not None:
         notifications = loaded.get("notifications", False)
         media_player = loaded.get("media_player", False)
 
-        # if notifications:
-        #     if unload_ok := await hass.config_entries.async_unload_platforms(entry, [Platform.NOTIFY]):
-        #         _logger.debug("unloaded notifications for: %s [%s]", entry.title, entry.unique_id)
-        # NOTE(Amadeo): disabled due to "ValueError: Config entry was never loaded!" error
+        if notifications:
+            # only unloads the notify entity, the discovery loaded notify service stays behind
+            if unload_ok := await hass.config_entries.async_unload_platforms(entry, [Platform.NOTIFY]):
+                _logger.debug("unloaded notifications for: %s [%s]", entry.title, entry.unique_id)
 
         if media_player:
             if unload_ok := await hass.config_entries.async_unload_platforms(entry, [Platform.MEDIA_PLAYER]):
