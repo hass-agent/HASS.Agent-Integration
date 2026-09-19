@@ -62,7 +62,14 @@ SUPPORT_HAMP = (
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
     device_registry = dr.async_get(hass)
-    device = device_registry.async_get_device(identifiers={(DOMAIN, entry.unique_id)})
+    device = next(
+        (
+            device
+            for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+            if (DOMAIN, entry.unique_id) in device.identifiers
+        ),
+        None,
+    )
 
     if device is None:
         return False

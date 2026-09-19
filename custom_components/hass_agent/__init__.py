@@ -56,7 +56,14 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
     _logger.debug("api changed for: %s", entry.unique_id)
     if apis is not None:
         device_registry = dr.async_get(hass)
-        device = device_registry.async_get_device(identifiers={(DOMAIN, entry.unique_id)})
+        device = next(
+            (
+                device
+                for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+                if (DOMAIN, entry.unique_id) in device.identifiers
+            ),
+            None,
+        )
 
         media_player = apis.get("media_player", False)
         is_media_player_loaded = hass.data[DOMAIN][entry.entry_id]["loaded"]["media_player"]
