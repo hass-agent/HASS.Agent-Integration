@@ -34,6 +34,7 @@ from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import slugify
 
 from .const import DOMAIN, CONF_ORIGINAL_DEVICE_NAME, CONF_DEVICE_NAME
+from .helpers import async_get_hass_agent_device
 
 PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 
@@ -55,15 +56,7 @@ async def update_device_info(hass: HomeAssistant, entry: ConfigEntry, new_device
 async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
     _logger.debug("api changed for: %s", entry.unique_id)
     if apis is not None:
-        device_registry = dr.async_get(hass)
-        device = next(
-            (
-                device
-                for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id)
-                if (DOMAIN, entry.unique_id) in device.identifiers
-            ),
-            None,
-        )
+        device = async_get_hass_agent_device(hass, entry)
 
         media_player = apis.get("media_player", False)
         is_media_player_loaded = hass.data[DOMAIN][entry.entry_id]["loaded"]["media_player"]
