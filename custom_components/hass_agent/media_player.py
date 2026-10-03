@@ -10,6 +10,7 @@ from homeassistant.components.mqtt.models import ReceiveMessage
 from homeassistant.helpers import device_registry as dr
 
 from .const import DOMAIN, CONF_ORIGINAL_DEVICE_NAME
+from .helpers import async_get_hass_agent_device
 
 
 from homeassistant.components.mqtt.subscription import (
@@ -61,8 +62,7 @@ SUPPORT_HAMP = (
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
-    device_registry = dr.async_get(hass)
-    device = device_registry.async_get_device(identifiers={(DOMAIN, entry.unique_id)})
+    device = async_get_hass_agent_device(hass, entry)
 
     if device is None:
         return False
