@@ -14,7 +14,11 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SSL, CONF_URL
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.service_info.mqtt import MqttServiceInfo
-from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
+from homeassistant.helpers.issue_registry import (
+    IssueSeverity,
+    async_create_issue,
+    async_delete_issue,
+)
 
 from .const import DOMAIN, CONF_DEFAULT_NOTIFICATION_TITLE, CONF_ORIGINAL_DEVICE_NAME, CONF_DEVICE_NAME
 
@@ -86,7 +90,11 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             self._data[CONF_ORIGINAL_DEVICE_NAME] = device_name
 
         if entry:
-            reload_required = device_name != entry.title
+            old_title = entry.title
+
+            # delete stale issue from the old name first so they dont pile up
+            if device_name != old_title:
+                async_delete_issue(self.hass, DOMAIN, f"restart_required_{old_title}")
 
             self.hass.config_entries.async_update_entry(
                 entry,
@@ -94,13 +102,13 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 data={**entry.data, **self._data},
             )
 
-            if reload_required:
+            if device_name != old_title:
                 self.hass.config_entries.async_schedule_reload(entry.entry_id)
 
                 async_create_issue(
-                    hass=self.hass,
-                    domain=DOMAIN,
-                    issue_id=f"restart_required_{device_name}",
+                    self.hass,
+                    DOMAIN,
+                    f"restart_required_{device_name}",
                     data={CONF_DEVICE_NAME: device_name},
                     is_fixable=True,
                     severity=IssueSeverity.WARNING,
@@ -109,6 +117,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                         "name": device_name,
                     },
                 )
+            else:
+                # no rename happened, but delete the issue anyway
+                # in case one was left behind by a previous rename
+                async_delete_issue(self.hass, DOMAIN, f"restart_required_{device_name}")
 
         self._abort_if_unique_id_configured()
 
