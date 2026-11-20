@@ -141,7 +141,7 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
 
     async def async_will_remove_from_hass(self) -> None:
         if self._listeners is not None:
-            async_unsubscribe_topics(self.hass, self._listeners)
+            self._listeners = async_unsubscribe_topics(self.hass, self._listeners)
 
     def __init__(self, unique_id, entry_id, device: dr.DeviceEntry, original_device_name):
         """Initialize"""
